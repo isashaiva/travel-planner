@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Navbar from "../components/layouts/NavBar";
+import Navbar from "../components/layouts/Navbar";
 import {
   deleteRoute,
   getRoutes,

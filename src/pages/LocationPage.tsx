@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import Navbar from "../components/layouts/NavBar";
+import Navbar from "../components/layouts/Navbar";
 import Footer from "../components/layouts/Footer";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 

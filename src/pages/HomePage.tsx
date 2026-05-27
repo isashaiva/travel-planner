@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "../app/AuthContext";
-import Navbar from "../components/layouts/NavBar";
+import Navbar from "../components/layouts/Navbar";
 import Footer from "../components/layouts/Footer";
 
 export default function HomePage() {

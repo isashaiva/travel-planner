@@ -7,7 +7,7 @@ import { generateRoutes } from "../features/routes/routeService";
 import { getCityByCoords } from "../features/city/cityService";
 
 import { saveRoute } from "../features/dashboard/dashboardService";
-import Navbar from "../components/layouts/NavBar";
+import Navbar from "../components/layouts/Navbar";
 import Footer from "../components/layouts/Footer";
 import { useNavigate } from "react-router-dom";
 
