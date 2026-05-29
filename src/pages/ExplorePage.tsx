@@ -13,6 +13,50 @@ import {
   copyRoute,
 } from "../features/dashboard/dashboardService";
 
+function RouteCardSkeleton() {
+  return (
+    <div className="bg-white rounded-[34px] overflow-hidden border border-slate-200 shadow-lg flex flex-col animate-pulse">
+      <div className="h-52 bg-slate-200" />
+      <div className="p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-slate-200" />
+          <div className="h-4 w-24 bg-slate-200 rounded-full" />
+        </div>
+        <div className="h-7 bg-slate-200 rounded-2xl w-3/4" />
+        <div className="h-4 bg-slate-100 rounded-full w-full" />
+        <div className="h-4 bg-slate-100 rounded-full w-2/3" />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-16 bg-slate-100 rounded-2xl" />
+          <div className="h-16 bg-slate-100 rounded-2xl" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-10 bg-slate-100 rounded-xl" />
+          <div className="h-10 bg-slate-100 rounded-xl" />
+          <div className="h-10 bg-slate-100 rounded-xl" />
+        </div>
+        <div className="flex gap-2">
+          <div className="h-12 w-16 bg-slate-100 rounded-2xl" />
+          <div className="h-12 w-12 bg-slate-100 rounded-2xl" />
+          <div className="flex-1 h-12 bg-slate-100 rounded-2xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CommentSkeleton() {
+  return (
+    <div className="flex gap-3 animate-pulse">
+      <div className="w-9 h-9 rounded-full bg-slate-200 shrink-0" />
+      <div className="flex-1 bg-slate-100 rounded-2xl p-4 space-y-2">
+        <div className="h-3 bg-slate-200 rounded-full w-1/3" />
+        <div className="h-3 bg-slate-200 rounded-full w-full" />
+        <div className="h-3 bg-slate-200 rounded-full w-2/3" />
+      </div>
+    </div>
+  );
+}
+
 export default function ExplorePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -20,12 +64,16 @@ export default function ExplorePage() {
   const [routes, setRoutes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [likedRoutes, setLikedRoutes] = useState<Set<string>>(new Set());
+  const [likingId, setLikingId] = useState<string | null>(null);
   const [openedRoute, setOpenedRoute] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copyingId, setCopyingId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string>("all");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     loadRoutes();
@@ -44,8 +92,8 @@ export default function ExplorePage() {
 
   const handleLike = async (routeId: string) => {
     if (!user) return navigate("/login");
+    setLikingId(routeId);
     const wasLiked = likedRoutes.has(routeId);
-    // Optimistic update
     setLikedRoutes((prev) => {
       const next = new Set(prev);
       wasLiked ? next.delete(routeId) : next.add(routeId);
@@ -59,13 +107,16 @@ export default function ExplorePage() {
       ),
     );
     await toggleLike(routeId);
+    setLikingId(null);
   };
 
   const handleOpenComments = async (route: any) => {
     setOpenedRoute(route);
     setCommentText("");
+    setCommentsLoading(true);
     const data = await getComments(route.id);
     setComments(data);
+    setCommentsLoading(false);
   };
 
   const handleAddComment = async () => {
@@ -86,14 +137,25 @@ export default function ExplorePage() {
 
   const handleCopy = async (route: any) => {
     if (!user) return navigate("/login");
+    setCopyingId(route.id);
     await copyRoute(route);
+    setCopyingId(null);
     setCopiedId(route.id);
     setTimeout(() => setCopiedId(null), 3000);
   };
 
-  const types = ["all", ...Array.from(new Set(routes.map((r) => r.type)))];
-  const filtered =
-    filterType === "all" ? routes : routes.filter((r) => r.type === filterType);
+  const types = ["all", "history", "city", "nature"];
+  const filtered = routes.filter((r) => {
+    const matchesType = filterType === "all" || r.type === filterType;
+    const matchesSearch =
+      search.trim() === "" ||
+      r.title?.toLowerCase().includes(search.toLowerCase()) ||
+      r.description?.toLowerCase().includes(search.toLowerCase()) ||
+      r.places?.some((p: any) =>
+        p.name?.toLowerCase().includes(search.toLowerCase()),
+      );
+    return matchesType && matchesSearch;
+  });
 
   const getPhoto = (route: any) =>
     route.places?.find((p: any) => p.photo)?.photo ||
@@ -112,7 +174,6 @@ export default function ExplorePage() {
         <Navbar />
 
         <div className="max-w-7xl mx-auto px-6 py-10">
-          {/* HEADER */}
           <div className="mb-10">
             <h1 className="text-5xl font-black text-slate-800">🌍 Explore</h1>
             <p className="text-slate-500 mt-2">
@@ -120,23 +181,53 @@ export default function ExplorePage() {
             </p>
           </div>
 
-          {/* FILTERS */}
-          <div className="flex gap-3 flex-wrap mb-8">
-            {types.map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-5 py-2 rounded-2xl font-bold text-sm transition capitalize
-                  ${
-                    filterType === type
-                      ? "bg-sky-500 text-white shadow-lg shadow-sky-200"
-                      : "bg-white/60 border border-white/60 text-slate-600 hover:bg-white"
-                  }`}
-              >
-                {type === "all" ? "🗺️ Всі" : type}
-              </button>
-            ))}
-          </div>
+          {/* FILTERS + SEARCH */}
+          {!loading && (
+            <div className="flex flex-col gap-4 mb-8">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400">
+                  🔍
+                </div>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Пошук маршрутів, локацій..."
+                  className="w-full bg-white/60 backdrop-blur border border-white/60 rounded-2xl pl-11 pr-4 py-3 text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-sky-300 shadow-sm"
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-3 flex-wrap">
+                {types.map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setFilterType(type)}
+                    className={`px-5 py-2 rounded-2xl font-bold text-sm transition capitalize
+                      ${
+                        filterType === type
+                          ? "bg-sky-500 text-white shadow-lg shadow-sky-200"
+                          : "bg-white/60 border border-white/60 text-slate-600 hover:bg-white"
+                      }`}
+                  >
+                    {type === "all"
+                      ? "🗺️ Всі"
+                      : type === "history"
+                        ? "🏛️ History"
+                        : type === "city"
+                          ? "🌆 City"
+                          : "🌿 Nature"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* TOAST */}
           {copiedId && (
@@ -156,12 +247,12 @@ export default function ExplorePage() {
           {/* ROUTES */}
           {loading ? (
             <div className="grid xl:grid-cols-3 lg:grid-cols-2 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div
-                  key={i}
-                  className="bg-white/60 rounded-[34px] h-96 animate-pulse"
-                />
-              ))}
+              <RouteCardSkeleton />
+              <RouteCardSkeleton />
+              <RouteCardSkeleton />
+              <RouteCardSkeleton />
+              <RouteCardSkeleton />
+              <RouteCardSkeleton />
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32 text-center">
@@ -279,15 +370,21 @@ export default function ExplorePage() {
                       {/* LIKE */}
                       <button
                         onClick={() => handleLike(route.id)}
-                        className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm transition
+                        className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm transition min-w-[64px]
                           ${
                             likedRoutes.has(route.id)
                               ? "bg-red-50 text-red-500 border border-red-200"
                               : "bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500"
                           }`}
                       >
-                        {likedRoutes.has(route.id) ? "❤️" : "🤍"}{" "}
-                        {route.likesCount || 0}
+                        {likingId === route.id ? (
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            {likedRoutes.has(route.id) ? "❤️" : "🤍"}{" "}
+                            {route.likesCount || 0}
+                          </>
+                        )}
                       </button>
 
                       {/* COMMENTS */}
@@ -302,11 +399,16 @@ export default function ExplorePage() {
                       {user && route.userId !== user.uid && (
                         <button
                           onClick={() => handleCopy(route)}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm bg-gradient-to-r from-cyan-400 to-blue-500 text-white transition hover:shadow-lg"
+                          disabled={copyingId === route.id}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm bg-gradient-to-r from-cyan-400 to-blue-500 text-white transition hover:shadow-lg disabled:opacity-70"
                         >
-                          {copiedId === route.id
-                            ? "✅ Збережено"
-                            : "⬇️ Зберегти"}
+                          {copyingId === route.id ? (
+                            <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                          ) : copiedId === route.id ? (
+                            "✅ Збережено"
+                          ) : (
+                            "⬇️ Зберегти"
+                          )}
                         </button>
                       )}
 
@@ -331,7 +433,6 @@ export default function ExplorePage() {
       {openedRoute && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl flex flex-col max-h-[80vh]">
-            {/* HEADER */}
             <div className="flex items-center justify-between p-6 border-b">
               <div>
                 <h2 className="text-xl font-black text-slate-800">
@@ -349,9 +450,14 @@ export default function ExplorePage() {
               </button>
             </div>
 
-            {/* COMMENTS LIST */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {comments.length === 0 ? (
+              {commentsLoading ? (
+                <>
+                  <CommentSkeleton />
+                  <CommentSkeleton />
+                  <CommentSkeleton />
+                </>
+              ) : comments.length === 0 ? (
                 <div className="text-center py-10 text-slate-400">
                   <div className="text-4xl mb-3">💬</div>
                   Коментарів ще немає. Будьте першим!
@@ -405,7 +511,6 @@ export default function ExplorePage() {
               )}
             </div>
 
-            {/* INPUT */}
             {user ? (
               <div className="p-4 border-t flex gap-3">
                 <input
@@ -418,7 +523,7 @@ export default function ExplorePage() {
                 <button
                   onClick={handleAddComment}
                   disabled={commentLoading || !commentText.trim()}
-                  className="bg-sky-500 hover:bg-sky-600 text-white px-5 py-3 rounded-2xl font-black text-sm transition disabled:opacity-50"
+                  className="bg-sky-500 hover:bg-sky-600 text-white px-5 py-3 rounded-2xl font-black text-sm transition disabled:opacity-50 flex items-center justify-center"
                 >
                   {commentLoading ? (
                     <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />

@@ -18,13 +18,11 @@ export default function ProfilePage() {
   const [routes, setRoutes] = useState<any[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(true);
 
-  // Edit name
   const [displayName, setDisplayName] = useState("");
   const [nameLoading, setNameLoading] = useState(false);
   const [nameSuccess, setNameSuccess] = useState(false);
   const [nameError, setNameError] = useState("");
 
-  // Change password
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -32,7 +30,6 @@ export default function ProfilePage() {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
-  // Delete account
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -56,7 +53,6 @@ export default function ProfilePage() {
     });
   }, []);
 
-  // Stats
   const visitedCount = (() => {
     const visited = new Set(
       JSON.parse(localStorage.getItem("visitedPlaces") || "[]"),
@@ -152,7 +148,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen overflow-hidden relative bg-gradient-to-br from-sky-100 via-cyan-50 to-blue-100">
-      {/* BUBBLES */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-80px] left-[-80px] w-[320px] h-[320px] rounded-full bg-cyan-300/40 blur-3xl" />
         <div className="absolute top-[20%] right-[-100px] w-[400px] h-[400px] rounded-full bg-blue-300/30 blur-3xl" />
@@ -215,38 +210,52 @@ export default function ProfilePage() {
 
           {/* STATS */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              {
-                label: "Маршрутів",
-                value: loadingRoutes ? "..." : routes.length,
-                color: "text-sky-500",
-              },
-              {
-                label: "Відвідано",
-                value: visitedCount,
-                color: "text-green-500",
-              },
-              {
-                label: "Тип маршруту",
-                value: favoriteType,
-                color: "text-blue-500",
-              },
-              {
-                label: "Загальний бюджет",
-                value: `${totalBudget} ₴`,
-                color: "text-slate-800",
-              },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[24px] p-5 shadow-lg"
-              >
-                <div className="text-slate-400 text-sm mb-2">{stat.label}</div>
-                <div className={`text-2xl font-black ${stat.color} capitalize`}>
-                  {stat.value}
-                </div>
-              </div>
-            ))}
+            {loadingRoutes
+              ? [1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[24px] p-5 shadow-lg animate-pulse"
+                  >
+                    <div className="h-3 w-16 bg-white/60 rounded-full mb-3" />
+                    <div className="h-8 w-12 bg-white/60 rounded-xl" />
+                  </div>
+                ))
+              : [
+                  {
+                    label: "Маршрутів",
+                    value: routes.length,
+                    color: "text-sky-500",
+                  },
+                  {
+                    label: "Відвідано",
+                    value: visitedCount,
+                    color: "text-green-500",
+                  },
+                  {
+                    label: "Тип маршруту",
+                    value: favoriteType,
+                    color: "text-blue-500",
+                  },
+                  {
+                    label: "Загальний бюджет",
+                    value: `${totalBudget} ₴`,
+                    color: "text-slate-800",
+                  },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[24px] p-5 shadow-lg"
+                  >
+                    <div className="text-slate-400 text-sm mb-2">
+                      {stat.label}
+                    </div>
+                    <div
+                      className={`text-2xl font-black ${stat.color} capitalize`}
+                    >
+                      {stat.value}
+                    </div>
+                  </div>
+                ))}
           </div>
 
           {/* RECENT ROUTES */}
@@ -265,7 +274,17 @@ export default function ProfilePage() {
             {loadingRoutes ? (
               <div className="space-y-3 animate-pulse">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 bg-white/50 rounded-2xl" />
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 bg-white/60 rounded-2xl p-4"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-slate-200 shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-slate-200 rounded-full w-1/2" />
+                      <div className="h-3 bg-slate-100 rounded-full w-1/3" />
+                    </div>
+                    <div className="w-16 h-7 bg-slate-200 rounded-xl" />
+                  </div>
                 ))}
               </div>
             ) : routes.length === 0 ? (
@@ -340,7 +359,7 @@ export default function ProfilePage() {
               <button
                 onClick={handleUpdateName}
                 disabled={nameLoading}
-                className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-6 py-3 rounded-2xl font-black transition hover:shadow-lg disabled:opacity-60 flex items-center gap-2"
+                className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-6 py-3 rounded-2xl font-black transition hover:shadow-lg disabled:opacity-60 flex items-center justify-center gap-2 min-w-[120px]"
               >
                 {nameLoading ? (
                   <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -351,7 +370,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* CHANGE PASSWORD — тільки для email провайдера */}
+          {/* CHANGE PASSWORD */}
           {isEmailProvider && (
             <div className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[32px] p-8 shadow-xl">
               <h2 className="text-2xl font-black text-slate-800 mb-6">
@@ -404,7 +423,7 @@ export default function ProfilePage() {
                 <button
                   onClick={handleChangePassword}
                   disabled={passwordLoading}
-                  className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-6 py-3 rounded-2xl font-black transition hover:shadow-lg disabled:opacity-60 flex items-center gap-2"
+                  className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-6 py-3 rounded-2xl font-black transition hover:shadow-lg disabled:opacity-60 flex items-center justify-center gap-2 min-w-[160px]"
                 >
                   {passwordLoading ? (
                     <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />

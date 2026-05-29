@@ -18,14 +18,11 @@ export default function LocationPage() {
     libraries,
   });
 
-  // ✅ Координати читаємо прямо з place (не з geometry.location)
   const lat = place?.lat ?? place?.geometry?.location?.lat;
   const lng = place?.lng ?? place?.geometry?.location?.lng;
-
   const resolvedLat = typeof lat === "function" ? lat() : parseFloat(lat);
   const resolvedLng = typeof lng === "function" ? lng() : parseFloat(lng);
 
-  // ✅ Завантажуємо деталі (відгуки, editorial_summary, фото) через Places Details
   useEffect(() => {
     if (!isLoaded || !place?.place_id) return;
 
@@ -59,12 +56,10 @@ export default function LocationPage() {
     );
   }, [isLoaded, place?.place_id]);
 
-  // ✅ Фото: спочатку з Details API (не протухає), fallback на збережений URL або unsplash
   const getPhoto = () => {
     if (details?.photos?.[0]) {
       return details.photos[0].getUrl({ maxWidth: 1600, maxHeight: 900 });
     }
-    // place.photo з БД може бути протухлим Google URL — використовуємо як last resort
     if (place?.photo && !place.photo.includes("PhotoService")) {
       return place.photo;
     }
@@ -86,21 +81,16 @@ export default function LocationPage() {
 
   return (
     <div className="min-h-screen overflow-hidden relative bg-gradient-to-br from-sky-100 via-cyan-50 to-blue-100">
-      {/* BACKGROUND BUBBLES */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-80px] left-[-80px] w-[320px] h-[320px] rounded-full bg-cyan-300/40 blur-3xl" />
-
         <div className="absolute top-[20%] right-[-100px] w-[400px] h-[400px] rounded-full bg-blue-300/30 blur-3xl" />
-
         <div className="absolute bottom-[-120px] left-[20%] w-[350px] h-[350px] rounded-full bg-white/60 blur-3xl" />
-
         <div className="absolute bottom-[10%] right-[10%] w-[220px] h-[220px] rounded-full bg-cyan-200/50 blur-3xl" />
       </div>
       <Navbar />
 
-      {/* HERO — розмитий фон + glassmorphism карточка */}
+      {/* HERO */}
       <div className="relative h-[420px] w-full overflow-hidden bg-slate-800">
-        {/* Фонове фото з сильним blur */}
         <img
           src={getPhoto()}
           alt=""
@@ -111,10 +101,8 @@ export default function LocationPage() {
               "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1600&q=80";
           }}
         />
-        {/* Темний оверлей */}
         <div className="absolute inset-0 bg-black/40" />
 
-        {/* Glassmorphism карточка по центру */}
         <div className="absolute inset-0 flex items-center justify-center px-6">
           <div
             className="w-full max-w-2xl rounded-[32px] p-8 flex flex-col items-center text-center gap-4"
@@ -126,7 +114,6 @@ export default function LocationPage() {
               boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
             }}
           >
-            {/* Маленьке фото у колі */}
             <div className="w-24 h-24 rounded-[20px] overflow-hidden border-2 border-white/30 shadow-xl shrink-0">
               <img
                 src={getPhoto()}
@@ -143,11 +130,15 @@ export default function LocationPage() {
               <h1 className="text-4xl font-black text-white leading-tight mb-2 drop-shadow">
                 {place.name}
               </h1>
-              <p className="text-white/70 text-base">
-                {details?.formatted_address ||
-                  place.vicinity ||
-                  "Популярна travel-локація"}
-              </p>
+              {loadingDetails ? (
+                <div className="h-4 w-48 bg-white/20 rounded-full animate-pulse mx-auto" />
+              ) : (
+                <p className="text-white/70 text-base">
+                  {details?.formatted_address ||
+                    place.vicinity ||
+                    "Популярна travel-локація"}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-3 flex-wrap justify-center">
@@ -188,45 +179,61 @@ export default function LocationPage() {
               )}
 
               <div className="grid sm:grid-cols-3 gap-4 mt-8">
-                <div className="bg-slate-50 rounded-3xl p-5 border border-slate-100">
-                  <div className="text-slate-400 text-sm mb-2">Рейтинг</div>
-                  <div className="text-3xl font-black text-sky-500">
-                    ⭐ {details?.rating ?? place.rating ?? "—"}
-                  </div>
-                </div>
-                <div className="bg-slate-50 rounded-3xl p-5 border border-slate-100">
-                  <div className="text-slate-400 text-sm mb-2">Відгуків</div>
-                  <div className="text-3xl font-black text-slate-800">
-                    {details?.user_ratings_total ??
-                      place.user_ratings_total ??
-                      0}
-                  </div>
-                </div>
-                <div className="bg-slate-50 rounded-3xl p-5 border border-slate-100">
-                  <div className="text-slate-400 text-sm mb-2">Тип</div>
-                  <div className="text-xl font-black text-slate-800 capitalize">
-                    {(place.types?.[0] || "place").replace(/_/g, " ")}
-                  </div>
-                </div>
+                {loadingDetails ? (
+                  [1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="bg-slate-50 rounded-3xl p-5 border border-slate-100 animate-pulse"
+                    >
+                      <div className="h-3 w-12 bg-slate-200 rounded-full mb-3" />
+                      <div className="h-8 w-16 bg-slate-200 rounded-xl" />
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="bg-slate-50 rounded-3xl p-5 border border-slate-100">
+                      <div className="text-slate-400 text-sm mb-2">Рейтинг</div>
+                      <div className="text-3xl font-black text-sky-500">
+                        ⭐ {details?.rating ?? place.rating ?? "—"}
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 rounded-3xl p-5 border border-slate-100">
+                      <div className="text-slate-400 text-sm mb-2">
+                        Відгуків
+                      </div>
+                      <div className="text-3xl font-black text-slate-800">
+                        {details?.user_ratings_total ??
+                          place.user_ratings_total ??
+                          0}
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 rounded-3xl p-5 border border-slate-100">
+                      <div className="text-slate-400 text-sm mb-2">Тип</div>
+                      <div className="text-xl font-black text-slate-800 capitalize">
+                        {(place.types?.[0] || "place").replace(/_/g, " ")}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
-              {/* Години роботи якщо є */}
-              {details?.opening_hours?.weekday_text?.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="text-xl font-black text-slate-800 mb-4">
-                    Години роботи
-                  </h3>
-                  <div className="space-y-2">
-                    {details.opening_hours.weekday_text.map(
-                      (line: string, i: number) => (
-                        <div key={i} className="text-slate-600 text-sm">
-                          {line}
-                        </div>
-                      ),
-                    )}
+              {!loadingDetails &&
+                details?.opening_hours?.weekday_text?.length > 0 && (
+                  <div className="mt-8">
+                    <h3 className="text-xl font-black text-slate-800 mb-4">
+                      Години роботи
+                    </h3>
+                    <div className="space-y-2">
+                      {details.opening_hours.weekday_text.map(
+                        (line: string, i: number) => (
+                          <div key={i} className="text-slate-600 text-sm">
+                            {line}
+                          </div>
+                        ),
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
 
             {/* REVIEWS */}
@@ -242,7 +249,10 @@ export default function LocationPage() {
                       key={i}
                       className="bg-slate-50 rounded-3xl p-5 border border-slate-100 space-y-3"
                     >
-                      <div className="h-4 bg-slate-200 rounded-full w-1/3" />
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-slate-200" />
+                        <div className="h-4 w-24 bg-slate-200 rounded-full" />
+                      </div>
                       <div className="h-3 bg-slate-100 rounded-full w-full" />
                       <div className="h-3 bg-slate-100 rounded-full w-4/5" />
                     </div>
@@ -307,8 +317,11 @@ export default function LocationPage() {
               </div>
               <div className="h-[400px]">
                 {!isLoaded ? (
-                  <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-400">
-                    Завантаження карти...
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 gap-3">
+                    <div className="w-10 h-10 border-4 border-sky-200 border-t-sky-500 rounded-full animate-spin" />
+                    <p className="text-slate-400 text-sm font-medium">
+                      Завантаження карти...
+                    </p>
                   </div>
                 ) : !isNaN(resolvedLat) && !isNaN(resolvedLng) ? (
                   <GoogleMap
@@ -338,7 +351,7 @@ export default function LocationPage() {
                   🗺️ Відкрити в Google Maps
                 </a>
               )}
-              {details?.website && (
+              {!loadingDetails && details?.website && (
                 <a
                   href={details.website}
                   target="_blank"

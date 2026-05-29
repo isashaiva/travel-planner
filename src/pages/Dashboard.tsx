@@ -33,13 +33,60 @@ const getLatLng = (place: any): { lat: number; lng: number } => {
   };
 };
 
+function RouteCardSkeleton() {
+  return (
+    <div className="bg-white rounded-[34px] overflow-hidden border border-slate-200 shadow-lg flex flex-col h-full animate-pulse">
+      <div className="h-52 bg-slate-200" />
+      <div className="p-6 flex flex-col gap-4 flex-1">
+        <div className="h-8 bg-slate-100 rounded-2xl w-3/4" />
+        <div className="h-4 bg-slate-100 rounded-full w-full" />
+        <div className="h-4 bg-slate-100 rounded-full w-2/3" />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="h-20 bg-slate-100 rounded-3xl" />
+          <div className="h-20 bg-slate-100 rounded-3xl" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-14 bg-slate-100 rounded-2xl" />
+          <div className="h-14 bg-slate-100 rounded-2xl" />
+          <div className="h-14 bg-slate-100 rounded-2xl" />
+        </div>
+        <div className="flex gap-3 mt-auto">
+          <div className="flex-1 h-14 bg-slate-100 rounded-2xl" />
+          <div className="flex-1 h-14 bg-slate-100 rounded-2xl" />
+          <div className="w-14 h-14 bg-slate-100 rounded-2xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [routes, setRoutes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState<string>("all");
+  const [search, setSearch] = useState("");
   const [openedRoute, setOpenedRoute] = useState<any>(null);
   const [direction, setDirection] = useState<any>(null);
   const [deletedMessage, setDeletedMessage] = useState("");
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Filter types for the filter buttons
+  const types = ["all", "history", "city", "nature"];
+
+  // Compute filtered routes based on filterType and search
+  const filteredRoutes = routes.filter((route) => {
+    const matchesType =
+      filterType === "all" ? true : route.type === filterType;
+    const matchesSearch =
+      search.trim() === "" ||
+      route.title?.toLowerCase().includes(search.toLowerCase()) ||
+      route.description?.toLowerCase().includes(search.toLowerCase()) ||
+      route.places?.some((place: any) =>
+        place.name?.toLowerCase().includes(search.toLowerCase()),
+      );
+    return matchesType && matchesSearch;
+  });
 
   const [visitedPlaces, setVisitedPlaces] = useState<Set<string>>(() => {
     const saved = localStorage.getItem("visitedPlaces");
@@ -48,8 +95,10 @@ export default function DashboardPage() {
 
   const getVisitedKey = (routeId: string, placeId: string) =>
     `${routeId}:${placeId}`;
+
   const isVisited = (routeId: string, placeId: string) =>
     visitedPlaces.has(getVisitedKey(routeId, placeId));
+
   const toggleVisited = (
     e: React.MouseEvent,
     routeId: string,
@@ -85,14 +134,17 @@ export default function DashboardPage() {
   useEffect(() => {
     loadRoutes();
   }, []);
+
   useEffect(() => {
     if (!openedRoute || !isLoaded) return;
     buildRoute();
   }, [openedRoute, isLoaded]);
 
   const loadRoutes = async () => {
+    setLoading(true);
     const data = await getRoutes();
     setRoutes(data);
+    setLoading(false);
   };
 
   const handleDelete = async (route: any) => {
@@ -170,20 +222,78 @@ export default function DashboardPage() {
       )}
 
       <div className="max-w-7xl mx-auto p-8">
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-5xl font-black text-slate-800">Мої маршрути</h1>
             <p className="text-slate-500 mt-2">Збережені travel-маршрути</p>
           </div>
-          <div className="bg-white rounded-3xl px-6 py-4 shadow-lg border border-slate-200">
-            <div className="text-3xl font-black text-sky-500">
-              {routes.length}
-            </div>
+          <div className="bg-white rounded-3xl px-6 py-4 shadow-lg border border-slate-200 min-w-[80px] text-center">
+            {loading ? (
+              <div className="h-9 w-8 bg-slate-100 rounded-xl animate-pulse mx-auto mb-1" />
+            ) : (
+              <div className="text-3xl font-black text-sky-500">
+                {filteredRoutes.length}
+              </div>
+            )}
             <div className="text-slate-500 text-sm">маршрутів</div>
           </div>
         </div>
 
-        {routes.length === 0 ? (
+        {/* FILTERS + SEARCH */}
+        {!loading && routes.length > 0 && (
+          <div className="flex flex-col gap-4 mb-8">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400">
+                🔍
+              </div>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Пошук маршрутів, локацій..."
+                className="w-full bg-white/60 backdrop-blur border border-white/60 rounded-2xl pl-11 pr-4 py-3 text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-sky-300 shadow-sm"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-slate-600"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              {types.map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setFilterType(type)}
+                  className={`px-5 py-2 rounded-2xl font-bold text-sm transition capitalize
+                    ${
+                      filterType === type
+                        ? "bg-sky-500 text-white shadow-lg shadow-sky-200"
+                        : "bg-white/60 border border-white/60 text-slate-600 hover:bg-white"
+                    }`}
+                >
+                  {type === "all"
+                    ? "🗺️ Всі"
+                    : type === "history"
+                      ? "🏛️ History"
+                      : type === "city"
+                        ? "🌆 City"
+                        : "🌿 Nature"}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="grid xl:grid-cols-3 lg:grid-cols-2 gap-6">
+            <RouteCardSkeleton />
+            <RouteCardSkeleton />
+            <RouteCardSkeleton />
+          </div>
+        ) : routes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32">
             <div className="w-40 h-40 rounded-full bg-sky-100 flex items-center justify-center mb-8 shadow-inner">
               <div className="text-7xl">🗺️</div>
@@ -204,167 +314,182 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid xl:grid-cols-3 lg:grid-cols-2 gap-6">
-            {routes.map((route) => (
-              <div
-                key={route.id}
-                className="group bg-white rounded-[34px] overflow-hidden border border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full"
-              >
-                {/* IMAGE */}
-                <div className="relative h-52 overflow-hidden">
-                  <img
-                    src={getRoutePhoto(route)}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800";
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className="absolute top-4 left-4 bg-sky-500/95 backdrop-blur text-white px-4 py-2 rounded-2xl text-sm font-black capitalize shadow-lg">
-                    {route.type}
-                  </div>
-                  {route.isPublic && (
-                    <div className="absolute top-4 right-4 bg-green-500/95 backdrop-blur text-white px-3 py-2 rounded-2xl text-xs font-black shadow-lg">
-                      🌍 Публічний
+            {filteredRoutes.length === 0 ? (
+              <div className="col-span-3 text-center py-20 text-slate-400">
+                <div className="text-5xl mb-4">🔍</div>
+                <p className="text-lg font-bold">Нічого не знайдено</p>
+                <p className="text-sm mt-1">
+                  Спробуй змінити пошуковий запит або фільтр
+                </p>
+              </div>
+            ) : (
+              filteredRoutes.map((route) => (
+                <div
+                  key={route.id}
+                  className="group bg-white rounded-[34px] overflow-hidden border border-slate-200 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full"
+                >
+                  {/* IMAGE */}
+                  <div className="relative h-52 overflow-hidden">
+                    <img
+                      src={getRoutePhoto(route)}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800";
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <div className="absolute top-4 left-4 bg-sky-500/95 backdrop-blur text-white px-4 py-2 rounded-2xl text-sm font-black capitalize shadow-lg">
+                      {route.type}
                     </div>
-                  )}
-                </div>
-
-                {/* CONTENT */}
-                <div className="p-6 flex flex-col flex-1">
-                  <div className="mb-4">
-                    <h2 className="text-3xl font-black text-slate-800 mb-2 line-clamp-1">
-                      {route.title}
-                    </h2>
-
-                    {route.savedFrom ? (
-                      <p className="text-xs text-slate-400 mb-2 flex items-center gap-1">
-                        📌 Збережено від{" "}
-                        <span className="font-bold text-slate-500">
-                          {route.savedFrom}
-                        </span>
-                      </p>
-                    ) : (
-                      <p className="text-slate-500 text-sm leading-relaxed line-clamp-2 min-h-[42px]">
-                        {route.description}
-                      </p>
+                    {route.isPublic && (
+                      <div className="absolute top-4 right-4 bg-green-500/95 backdrop-blur text-white px-3 py-2 rounded-2xl text-xs font-black shadow-lg">
+                        🌍 Публічний
+                      </div>
                     )}
                   </div>
 
-                  {/* STATS */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="rounded-3xl bg-slate-50 border border-slate-100 p-4">
-                      <div className="text-slate-400 text-sm mb-1">Локацій</div>
-                      <div className="text-3xl font-black text-sky-500">
-                        {route.places?.length || 0}
-                      </div>
+                  {/* CONTENT */}
+                  <div className="p-6 flex flex-col flex-1">
+                    <div className="mb-4">
+                      <h2 className="text-3xl font-black text-slate-800 mb-2 line-clamp-1">
+                        {route.title}
+                      </h2>
+                      {route.savedFrom ? (
+                        <p className="text-xs text-slate-400 mb-2 flex items-center gap-1">
+                          📌 Збережено від{" "}
+                          <span className="font-bold text-slate-500">
+                            {route.savedFrom}
+                          </span>
+                        </p>
+                      ) : (
+                        <p className="text-slate-500 text-sm leading-relaxed line-clamp-2 min-h-[42px]">
+                          {route.description}
+                        </p>
+                      )}
                     </div>
-                    <div className="rounded-3xl bg-slate-50 border border-slate-100 p-4">
-                      <div className="text-slate-400 text-sm mb-1">Бюджет</div>
-                      <div className="text-3xl font-black text-slate-800">
-                        {route.budget?.total || 0}
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* PLACES */}
-                  <div className="space-y-3 mb-6 max-h-[260px] overflow-y-auto pr-1">
-                    {route.places?.map((place: any, index: number) => (
-                      <div
-                        key={place.place_id}
-                        onClick={() =>
-                          navigate("/location/" + place.place_id, {
-                            state: { place },
-                          })
-                        }
-                        className={`group/place relative border rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5
+                    {/* STATS */}
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="rounded-3xl bg-slate-50 border border-slate-100 p-4">
+                        <div className="text-slate-400 text-sm mb-1">
+                          Локацій
+                        </div>
+                        <div className="text-3xl font-black text-sky-500">
+                          {route.places?.length || 0}
+                        </div>
+                      </div>
+                      <div className="rounded-3xl bg-slate-50 border border-slate-100 p-4">
+                        <div className="text-slate-400 text-sm mb-1">
+                          Бюджет
+                        </div>
+                        <div className="text-3xl font-black text-slate-800">
+                          {route.budget?.total || 0}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* PLACES */}
+                    <div className="space-y-3 mb-6 max-h-[260px] overflow-y-auto pr-1">
+                      {route.places?.map((place: any, index: number) => (
+                        <div
+                          key={place.place_id}
+                          onClick={() =>
+                            navigate("/location/" + place.place_id, {
+                              state: { place },
+                            })
+                          }
+                          className={`group/place relative border rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5
                           ${
                             isVisited(route.id, place.place_id)
                               ? "bg-slate-100 border-slate-200"
                               : "bg-slate-50 border-slate-100 hover:border-sky-300 hover:bg-sky-50"
                           }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`w-10 h-10 rounded-2xl text-white flex items-center justify-center font-black text-sm shrink-0 shadow transition-colors
-                            ${isVisited(route.id, place.place_id) ? "bg-green-400" : "bg-sky-500"}`}
-                          >
-                            {isVisited(route.id, place.place_id)
-                              ? "✓"
-                              : index + 1}
-                          </div>
-                          <div className="min-w-0 flex-1">
+                        >
+                          <div className="flex items-center gap-4">
                             <div
-                              className={`font-bold truncate transition-colors
-                              ${isVisited(route.id, place.place_id) ? "text-slate-400 line-through" : "text-slate-800"}`}
+                              className={`w-10 h-10 rounded-2xl text-white flex items-center justify-center font-black text-sm shrink-0 shadow transition-colors
+                              ${isVisited(route.id, place.place_id) ? "bg-green-400" : "bg-sky-500"}`}
                             >
-                              {place.name}
+                              {isVisited(route.id, place.place_id)
+                                ? "✓"
+                                : index + 1}
                             </div>
-                            <div className="text-sm text-slate-500">
-                              ⭐ {place.rating || "—"}
+                            <div className="min-w-0 flex-1">
+                              <div
+                                className={`font-bold truncate transition-colors
+                                ${isVisited(route.id, place.place_id) ? "text-slate-400 line-through" : "text-slate-800"}`}
+                              >
+                                {place.name}
+                              </div>
+                              <div className="text-sm text-slate-500">
+                                ⭐ {place.rating || "—"}
+                              </div>
                             </div>
-                          </div>
-                          <button
-                            onClick={(e) =>
-                              toggleVisited(e, route.id, place.place_id)
-                            }
-                            className={`shrink-0 opacity-0 group-hover/place:opacity-100 transition-all duration-200 px-3 py-1 rounded-xl text-xs font-bold
+                            <button
+                              onClick={(e) =>
+                                toggleVisited(e, route.id, place.place_id)
+                              }
+                              className={`shrink-0 opacity-0 group-hover/place:opacity-100 transition-all duration-200 px-3 py-1 rounded-xl text-xs font-bold
                               ${
                                 isVisited(route.id, place.place_id)
                                   ? "bg-slate-200 text-slate-500 hover:bg-red-100 hover:text-red-500"
                                   : "bg-green-100 text-green-600 hover:bg-green-200"
                               }`}
-                          >
-                            {isVisited(route.id, place.place_id)
-                              ? "Скасувати"
-                              : "✓ Відвідано"}
-                          </button>
+                            >
+                              {isVisited(route.id, place.place_id)
+                                ? "Скасувати"
+                                : "✓ Відвідано"}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
 
-                  {/* BUTTONS */}
-                  <div className="flex gap-3 mt-auto">
-                    <button
-                      onClick={() => {
-                        setDirection(null);
-                        setOpenedRoute(route);
-                      }}
-                      className="flex-1 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl py-4 font-black transition shadow-lg shadow-sky-200"
-                    >
-                      Open
-                    </button>
-
-                    {!route.savedFrom && (
+                    {/* BUTTONS */}
+                    <div className="flex gap-3 mt-auto">
                       <button
-                        onClick={(e) => handleTogglePublic(e, route)}
-                        disabled={togglingId === route.id}
-                        className={`flex-1 rounded-2xl py-4 font-black transition disabled:opacity-50
+                        onClick={() => {
+                          setDirection(null);
+                          setOpenedRoute(route);
+                        }}
+                        className="flex-1 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl py-4 font-black transition shadow-lg shadow-sky-200"
+                      >
+                        Open
+                      </button>
+
+                      {!route.savedFrom && (
+                        <button
+                          onClick={(e) => handleTogglePublic(e, route)}
+                          disabled={togglingId === route.id}
+                          className={`flex-1 rounded-2xl py-4 font-black transition disabled:opacity-50 flex items-center justify-center
                           ${
                             route.isPublic
                               ? "bg-green-100 text-green-600 hover:bg-green-200"
                               : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                           }`}
-                      >
-                        {togglingId === route.id
-                          ? "..."
-                          : route.isPublic
-                            ? "🌍 Публічний"
-                            : "🔒 Приватний"}
-                      </button>
-                    )}
+                        >
+                          {togglingId === route.id ? (
+                            <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          ) : route.isPublic ? (
+                            "🌍 Публічний"
+                          ) : (
+                            "🔒 Приватний"
+                          )}
+                        </button>
+                      )}
 
-                    <button
-                      onClick={() => handleDelete(route)}
-                      className="bg-slate-100 hover:bg-red-500 hover:text-white text-slate-700 rounded-2xl px-5 font-black transition"
-                    >
-                      🗑️
-                    </button>
+                      <button
+                        onClick={() => handleDelete(route)}
+                        className="bg-slate-100 hover:bg-red-500 hover:text-white text-slate-700 rounded-2xl px-5 font-black transition"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
       </div>
@@ -393,14 +518,20 @@ export default function DashboardPage() {
 
             <div className="h-[650px] flex items-center justify-center bg-slate-50">
               {!isLoaded && (
-                <p className="text-slate-400 font-semibold">
-                  Завантаження карти...
-                </p>
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-12 h-12 border-4 border-sky-200 border-t-sky-500 rounded-full animate-spin" />
+                  <p className="text-slate-400 font-semibold">
+                    Завантаження карти...
+                  </p>
+                </div>
               )}
               {isLoaded && !direction && (
-                <p className="text-slate-400 font-semibold">
-                  Побудова маршруту...
-                </p>
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-12 h-12 border-4 border-sky-200 border-t-sky-500 rounded-full animate-spin" />
+                  <p className="text-slate-400 font-semibold">
+                    Побудова маршруту...
+                  </p>
+                </div>
               )}
               {isLoaded && direction && (
                 <GoogleMap

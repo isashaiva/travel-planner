@@ -8,19 +8,19 @@ export default function HomePage() {
   const { user } = useAuth();
   const [nearestTrip, setNearestTrip] = useState<any>(null);
   const [tripCount, setTripCount] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
+    setLoading(true);
     import("../features/dashboard/dashboardService").then(({ getRoutes }) => {
       getRoutes().then((data) => {
         setTripCount(data.length);
         const visited = new Set(
           JSON.parse(localStorage.getItem("visitedPlaces") || "[]"),
         );
-
         let targetRoute = null;
         let targetPlace = null;
-
         for (const route of data) {
           const nextPlace = route.places?.find(
             (p: any) => !visited.has(`${route.id}:${p.place_id}`),
@@ -31,13 +31,12 @@ export default function HomePage() {
             break;
           }
         }
-
         if (!targetRoute && data[0]) {
           targetRoute = data[0];
           targetPlace = data[0].places?.[0] ?? null;
         }
-
         setNearestTrip({ route: targetRoute, place: targetPlace });
+        setLoading(false);
       });
     });
   }, [user?.uid]);
@@ -60,14 +59,12 @@ export default function HomePage() {
               <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/40 backdrop-blur-2xl border border-white/50 text-blue-700 shadow-lg mb-6">
                 ✈️ Планування подорожей
               </div>
-
               <h1 className="text-6xl font-black leading-tight text-gray-800 mb-8">
                 Плануй маршрути.
                 <span className="block bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
                   Подорожуй впевнено.
                 </span>
               </h1>
-
               <p className="text-gray-600 text-xl leading-relaxed max-w-xl mb-10">
                 Обери місто, отримай готовий маршрут з реальними локаціями,
                 розрахованим бюджетом та картою — за кілька секунд.
@@ -83,32 +80,47 @@ export default function HomePage() {
             </div>
 
             <div className="relative flex justify-center">
+              {/* MAIN CARD */}
               <div className="w-full max-w-[520px] backdrop-blur-3xl bg-white/25 border border-white/50 rounded-[40px] p-6 shadow-[0_8px_32px_rgba(31,38,135,0.18)]">
-                <img
-                  src={
-                    nearestTrip?.place?.photo ||
-                    "https://images.unsplash.com/photo-1512453979798-5ea266f8880c"
-                  }
-                  className="rounded-[30px] h-[420px] w-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c";
-                  }}
-                />
+                {loading ? (
+                  <div className="h-[420px] rounded-[30px] bg-white/40 animate-pulse" />
+                ) : (
+                  <img
+                    src={
+                      nearestTrip?.place?.photo ||
+                      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c"
+                    }
+                    className="rounded-[30px] h-[420px] w-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://images.unsplash.com/photo-1512453979798-5ea266f8880c";
+                    }}
+                  />
+                )}
               </div>
 
+              {/* SAVED TRIPS */}
               <div className="absolute top-6 -right-6 backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[28px] px-6 py-5 shadow-2xl">
                 <p className="text-sm text-gray-500 mb-1">Saved trips</p>
-                <h4 className="text-4xl font-black text-blue-600">
-                  {tripCount}
-                </h4>
+                {loading ? (
+                  <div className="h-10 w-10 bg-white/60 rounded-xl animate-pulse" />
+                ) : (
+                  <h4 className="text-4xl font-black text-blue-600">
+                    {tripCount}
+                  </h4>
+                )}
               </div>
 
+              {/* NEXT DESTINATION */}
               <div className="absolute bottom-6 -left-6 backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[28px] px-6 py-5 shadow-2xl max-w-[220px]">
                 <p className="text-sm text-gray-500 mb-1">Next destination</p>
-                <h4 className="text-2xl font-bold text-gray-800 break-words">
-                  {nearestTrip?.place?.name || "—"}
-                </h4>
+                {loading ? (
+                  <div className="h-7 w-36 bg-white/60 rounded-xl animate-pulse" />
+                ) : (
+                  <h4 className="text-2xl font-bold text-gray-800 break-words">
+                    {nearestTrip?.place?.name || "—"}
+                  </h4>
+                )}
               </div>
             </div>
           </div>
