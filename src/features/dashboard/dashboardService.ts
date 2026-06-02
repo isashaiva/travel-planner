@@ -61,7 +61,6 @@ const serializePlace = (place: any) => ({
   photo: getPhoto(place),
 });
 
-// Хелпер — актуальні дані юзера
 const getCurrentUserInfo = () => {
   const user = getAuth().currentUser;
   return {
@@ -80,6 +79,7 @@ export const saveRoute = async (route: any) => {
     description: route.description,
     type: route.type,
     budget: route.budget,
+    city: route.city || "",
     userId: uid,
     userName,
     userPhoto,
@@ -138,7 +138,6 @@ export const deleteRoute = async (id: string) => {
 
 export const togglePublic = async (routeId: string, isPublic: boolean) => {
   const { userName, userPhoto } = getCurrentUserInfo();
-  // При публікації оновлюємо також актуальні дані автора
   await updateDoc(doc(db, "routes", routeId), {
     isPublic,
     userName,
@@ -161,7 +160,6 @@ export const getPublicRoutes = async (): Promise<any[]> => {
   }
 };
 
-// Зберегти чужий маршрут до себе
 export const copyRoute = async (route: any) => {
   const { uid, userName, userPhoto } = getCurrentUserInfo();
   if (!uid) throw new Error("Not authenticated");
@@ -171,6 +169,7 @@ export const copyRoute = async (route: any) => {
     description: route.description,
     type: route.type,
     budget: route.budget,
+    city: route.city || "",
     userId: uid,
     userName,
     userPhoto,
@@ -185,7 +184,7 @@ export const copyRoute = async (route: any) => {
   return { id: docRef.id };
 };
 
-// ── ЛАЙКИ ──────────────────────────────────────────────────────
+// ── ЛАЙКИ МАРШРУТІВ ────────────────────────────────────────────
 
 export const toggleLike = async (routeId: string) => {
   const uid = getAuth().currentUser?.uid;
@@ -228,7 +227,11 @@ export const getUserLikes = async (
 
 // ── КОМЕНТАРІ ──────────────────────────────────────────────────
 
-export const addComment = async (routeId: string, text: string) => {
+export const addComment = async (
+  routeId: string,
+  text: string,
+  replyTo?: { id: string; userName: string } | null,
+) => {
   const user = getAuth().currentUser;
   if (!user) throw new Error("Not authenticated");
 
@@ -238,6 +241,9 @@ export const addComment = async (routeId: string, text: string) => {
     userName: user.displayName || user.email || "Анонім",
     userPhoto: user.photoURL || null,
     text,
+    likes: 0,
+    dislikes: 0,
+    replyTo: replyTo || null,
     createdAt: Date.now(),
   });
 };
@@ -259,4 +265,74 @@ export const getComments = async (routeId: string): Promise<any[]> => {
 
 export const deleteComment = async (commentId: string) => {
   await deleteDoc(doc(db, "comments", commentId));
+};
+
+// ── ЛАЙКИ / ДІЗЛАЙКИ КОМЕНТАРІВ ────────────────────────────────
+
+export const toggleCommentReaction = async (
+  commentId: string,
+  reaction: "like" | "dislike",
+) => {
+  const uid = getAuth().currentUser?.uid;
+  if (!uid) throw new Error("Not authenticated");
+
+  const reactionRef = doc(db, "commentReactions", `${commentId}_${uid}`);
+  const reactionSnap = await getDoc(reactionRef);
+  const commentRef = doc(db, "comments", commentId);
+  const commentSnap = await getDoc(commentRef);
+  const data = commentSnap.data() || {};
+
+  const prevReaction = reactionSnap.exists()
+    ? reactionSnap.data().reaction
+    : null;
+
+  if (prevReaction === reaction) {
+    // Скасовуємо реакцію
+    await deleteDoc(reactionRef);
+    const field = reaction === "like" ? "likes" : "dislikes";
+    await updateDoc(commentRef, {
+      [field]: Math.max(0, (data[field] || 0) - 1),
+    });
+    return null;
+  } else {
+    // Знімаємо попередню реакцію якщо була
+    if (prevReaction) {
+      const prevField = prevReaction === "like" ? "likes" : "dislikes";
+      await updateDoc(commentRef, {
+        [prevField]: Math.max(0, (data[prevField] || 0) - 1),
+      });
+    }
+    // Ставимо нову
+    await setDoc(reactionRef, {
+      userId: uid,
+      commentId,
+      reaction,
+      createdAt: Date.now(),
+    });
+    const newField = reaction === "like" ? "likes" : "dislikes";
+    await updateDoc(commentRef, {
+      [newField]: (data[newField] || 0) + 1,
+    });
+    return reaction;
+  }
+};
+
+export const getUserCommentReactions = async (
+  commentIds: string[],
+): Promise<Record<string, "like" | "dislike">> => {
+  const uid = getAuth().currentUser?.uid;
+  if (!uid || !commentIds.length) return {};
+
+  const reactions: Record<string, "like" | "dislike"> = {};
+  await Promise.all(
+    commentIds.map(async (commentId) => {
+      const snap = await getDoc(
+        doc(db, "commentReactions", `${commentId}_${uid}`),
+      );
+      if (snap.exists()) {
+        reactions[commentId] = snap.data().reaction as "like" | "dislike";
+      }
+    }),
+  );
+  return reactions;
 };

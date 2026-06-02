@@ -45,7 +45,6 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) setDisplayName(user.displayName || "");
   }, [user]);
-
   useEffect(() => {
     getRoutes().then((data) => {
       setRoutes(data);
@@ -105,14 +104,12 @@ export default function ProfilePage() {
       setConfirmPassword("");
       setTimeout(() => setPasswordSuccess(false), 3000);
     } catch (e: any) {
-      if (
+      setPasswordError(
         e?.code === "auth/wrong-password" ||
-        e?.code === "auth/invalid-credential"
-      ) {
-        setPasswordError("Невірний поточний пароль");
-      } else {
-        setPasswordError("Помилка зміни пароля");
-      }
+          e?.code === "auth/invalid-credential"
+          ? "Невірний поточний пароль"
+          : "Помилка зміни пароля",
+      );
     } finally {
       setPasswordLoading(false);
     }
@@ -126,14 +123,12 @@ export default function ProfilePage() {
       await logout();
       navigate("/");
     } catch (e: any) {
-      if (
+      setDeleteError(
         e?.code === "auth/wrong-password" ||
-        e?.code === "auth/invalid-credential"
-      ) {
-        setDeleteError("Невірний пароль");
-      } else {
-        setDeleteError("Помилка видалення акаунту");
-      }
+          e?.code === "auth/invalid-credential"
+          ? "Невірний пароль"
+          : "Помилка видалення акаунту",
+      );
     } finally {
       setDeleteLoading(false);
     }
@@ -149,35 +144,35 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen overflow-hidden relative bg-gradient-to-br from-sky-100 via-cyan-50 to-blue-100">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-80px] left-[-80px] w-[320px] h-[320px] rounded-full bg-cyan-300/40 blur-3xl" />
-        <div className="absolute top-[20%] right-[-100px] w-[400px] h-[400px] rounded-full bg-blue-300/30 blur-3xl" />
-        <div className="absolute bottom-[-120px] left-[20%] w-[350px] h-[350px] rounded-full bg-white/60 blur-3xl" />
-        <div className="absolute bottom-[10%] right-[10%] w-[220px] h-[220px] rounded-full bg-cyan-200/50 blur-3xl" />
+        <div className="absolute top-[-80px] left-[-80px] w-[220px] sm:w-[320px] h-[220px] sm:h-[320px] rounded-full bg-cyan-300/40 blur-3xl" />
+        <div className="absolute top-[20%] right-[-60px] sm:right-[-100px] w-[280px] sm:w-[400px] h-[280px] sm:h-[400px] rounded-full bg-blue-300/30 blur-3xl" />
+        <div className="absolute bottom-[-80px] left-[10%] sm:left-[20%] w-[250px] sm:w-[350px] h-[250px] sm:h-[350px] rounded-full bg-white/60 blur-3xl" />
       </div>
 
       <div className="relative z-10">
         <Navbar />
-
-        <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-5 sm:space-y-8">
           {/* PROFILE HEADER */}
-          <div className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[32px] p-8 shadow-xl flex items-center gap-6">
-            <div className="w-24 h-24 rounded-[24px] overflow-hidden shrink-0 shadow-lg">
+          <div className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 shadow-xl flex items-center gap-4 sm:gap-6">
+            <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-[16px] sm:rounded-[24px] overflow-hidden shrink-0 shadow-lg">
               {avatar ? (
                 <img src={avatar} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-4xl font-black">
+                <div className="w-full h-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-2xl sm:text-4xl font-black">
                   {initials}
                 </div>
               )}
             </div>
             <div>
-              <h1 className="text-3xl font-black text-slate-800">
+              <h1 className="text-xl sm:text-3xl font-black text-slate-800">
                 {user.displayName || "Без імені"}
               </h1>
-              <p className="text-slate-500 mt-1">{user.email}</p>
-              <div className="flex gap-2 mt-3">
+              <p className="text-slate-500 mt-0.5 sm:mt-1 text-xs sm:text-base">
+                {user.email}
+              </p>
+              <div className="flex gap-2 mt-2 sm:mt-3 flex-wrap">
                 {isGoogleProvider && (
-                  <span className="bg-white border border-slate-200 px-3 py-1 rounded-xl text-xs font-bold text-slate-600 flex items-center gap-1">
+                  <span className="bg-white border border-slate-200 px-2 sm:px-3 py-1 rounded-lg sm:rounded-xl text-xs font-bold text-slate-600 flex items-center gap-1">
                     <svg className="w-3 h-3" viewBox="0 0 24 24">
                       <path
                         fill="#4285F4"
@@ -200,7 +195,7 @@ export default function ProfilePage() {
                   </span>
                 )}
                 {isEmailProvider && (
-                  <span className="bg-white border border-slate-200 px-3 py-1 rounded-xl text-xs font-bold text-slate-600">
+                  <span className="bg-white border border-slate-200 px-2 sm:px-3 py-1 rounded-lg sm:rounded-xl text-xs font-bold text-slate-600">
                     ✉️ Email
                   </span>
                 )}
@@ -209,15 +204,15 @@ export default function ProfilePage() {
           </div>
 
           {/* STATS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {loadingRoutes
               ? [1, 2, 3, 4].map((i) => (
                   <div
                     key={i}
-                    className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[24px] p-5 shadow-lg animate-pulse"
+                    className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[18px] sm:rounded-[24px] p-4 sm:p-5 shadow-lg animate-pulse"
                   >
-                    <div className="h-3 w-16 bg-white/60 rounded-full mb-3" />
-                    <div className="h-8 w-12 bg-white/60 rounded-xl" />
+                    <div className="h-3 w-14 sm:w-16 bg-white/60 rounded-full mb-2 sm:mb-3" />
+                    <div className="h-7 sm:h-8 w-10 sm:w-12 bg-white/60 rounded-xl" />
                   </div>
                 ))
               : [
@@ -244,13 +239,13 @@ export default function ProfilePage() {
                 ].map((stat) => (
                   <div
                     key={stat.label}
-                    className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[24px] p-5 shadow-lg"
+                    className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[18px] sm:rounded-[24px] p-4 sm:p-5 shadow-lg"
                   >
-                    <div className="text-slate-400 text-sm mb-2">
+                    <div className="text-slate-400 text-xs sm:text-sm mb-1 sm:mb-2">
                       {stat.label}
                     </div>
                     <div
-                      className={`text-2xl font-black ${stat.color} capitalize`}
+                      className={`text-xl sm:text-2xl font-black ${stat.color} capitalize`}
                     >
                       {stat.value}
                     </div>
@@ -259,45 +254,47 @@ export default function ProfilePage() {
           </div>
 
           {/* RECENT ROUTES */}
-          <div className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[32px] p-8 shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-black text-slate-800">
+          <div className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 shadow-xl">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-800">
                 Останні маршрути
               </h2>
               <button
                 onClick={() => navigate("/dashboard")}
-                className="text-sky-500 font-bold text-sm hover:underline"
+                className="text-sky-500 font-bold text-xs sm:text-sm hover:underline"
               >
                 Всі маршрути →
               </button>
             </div>
             {loadingRoutes ? (
-              <div className="space-y-3 animate-pulse">
+              <div className="space-y-2 sm:space-y-3 animate-pulse">
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-4 bg-white/60 rounded-2xl p-4"
+                    className="flex items-center gap-3 sm:gap-4 bg-white/60 rounded-xl sm:rounded-2xl p-3 sm:p-4"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-slate-200 shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-slate-200 rounded-full w-1/2" />
-                      <div className="h-3 bg-slate-100 rounded-full w-1/3" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-slate-200 shrink-0" />
+                    <div className="flex-1 space-y-1.5 sm:space-y-2">
+                      <div className="h-3 sm:h-4 bg-slate-200 rounded-full w-1/2" />
+                      <div className="h-2.5 sm:h-3 bg-slate-100 rounded-full w-1/3" />
                     </div>
-                    <div className="w-16 h-7 bg-slate-200 rounded-xl" />
+                    <div className="w-14 sm:w-16 h-6 sm:h-7 bg-slate-200 rounded-lg sm:rounded-xl" />
                   </div>
                 ))}
               </div>
             ) : routes.length === 0 ? (
-              <p className="text-slate-400">Маршрутів ще немає</p>
+              <p className="text-slate-400 text-sm sm:text-base">
+                Маршрутів ще немає
+              </p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {routes.slice(0, 5).map((route) => (
                   <div
                     key={route.id}
                     onClick={() => navigate("/dashboard")}
-                    className="bg-white/60 hover:bg-white/80 border border-white/60 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition"
+                    className="bg-white/60 hover:bg-white/80 border border-white/60 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 cursor-pointer transition"
                   >
-                    <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl overflow-hidden shrink-0">
                       <img
                         src={
                           route.places?.[0]?.photo ||
@@ -311,15 +308,15 @@ export default function ProfilePage() {
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="font-black text-slate-800 truncate">
+                      <div className="font-black text-slate-800 truncate text-sm sm:text-base">
                         {route.title}
                       </div>
-                      <div className="text-slate-500 text-sm">
+                      <div className="text-slate-500 text-xs sm:text-sm">
                         {route.places?.length || 0} локацій ·{" "}
                         {route.budget?.total || 0} ₴
                       </div>
                     </div>
-                    <div className="bg-sky-100 text-sky-600 px-3 py-1 rounded-xl text-xs font-bold capitalize shrink-0">
+                    <div className="bg-sky-100 text-sky-600 px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl text-xs font-bold capitalize shrink-0">
                       {route.type}
                     </div>
                   </div>
@@ -329,13 +326,13 @@ export default function ProfilePage() {
           </div>
 
           {/* EDIT NAME */}
-          <div className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[32px] p-8 shadow-xl">
-            <h2 className="text-2xl font-black text-slate-800 mb-6">
+          <div className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 shadow-xl">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-800 mb-4 sm:mb-6">
               Редагувати профіль
             </h2>
-            <div className="max-w-md space-y-4">
+            <div className="max-w-md space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-600 mb-2">
+                <label className="block text-xs sm:text-sm font-bold text-slate-600 mb-1.5 sm:mb-2">
                   Відображуване ім'я
                 </label>
                 <input
@@ -345,21 +342,21 @@ export default function ProfilePage() {
                     setNameError("");
                   }}
                   placeholder="Твоє ім'я"
-                  className="w-full bg-white/60 border border-white/60 rounded-2xl px-4 py-3 text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-sky-300"
+                  className="w-full bg-white/60 border border-white/60 rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-sky-300"
                 />
                 {nameError && (
                   <p className="text-red-500 text-xs mt-1">{nameError}</p>
                 )}
               </div>
               {nameSuccess && (
-                <div className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 text-green-600 text-sm font-medium">
+                <div className="bg-green-50 border border-green-200 rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-green-600 text-xs sm:text-sm font-medium">
                   ✅ Ім'я оновлено
                 </div>
               )}
               <button
                 onClick={handleUpdateName}
                 disabled={nameLoading}
-                className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-6 py-3 rounded-2xl font-black transition hover:shadow-lg disabled:opacity-60 flex items-center justify-center gap-2 min-w-[120px]"
+                className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl font-black text-sm sm:text-base transition hover:shadow-lg disabled:opacity-60 flex items-center justify-center gap-2 min-w-[100px] sm:min-w-[120px]"
               >
                 {nameLoading ? (
                   <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -372,11 +369,11 @@ export default function ProfilePage() {
 
           {/* CHANGE PASSWORD */}
           {isEmailProvider && (
-            <div className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[32px] p-8 shadow-xl">
-              <h2 className="text-2xl font-black text-slate-800 mb-6">
+            <div className="backdrop-blur-3xl bg-white/40 border border-white/50 rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 shadow-xl">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-800 mb-4 sm:mb-6">
                 Змінити пароль
               </h2>
-              <div className="max-w-md space-y-4">
+              <div className="max-w-md space-y-3 sm:space-y-4">
                 {[
                   {
                     label: "Поточний пароль",
@@ -395,7 +392,7 @@ export default function ProfilePage() {
                   },
                 ].map(({ label, value, setter }) => (
                   <div key={label}>
-                    <label className="block text-sm font-bold text-slate-600 mb-2">
+                    <label className="block text-xs sm:text-sm font-bold text-slate-600 mb-1.5 sm:mb-2">
                       {label}
                     </label>
                     <input
@@ -406,24 +403,24 @@ export default function ProfilePage() {
                         setPasswordError("");
                       }}
                       placeholder="••••••••"
-                      className="w-full bg-white/60 border border-white/60 rounded-2xl px-4 py-3 text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-sky-300"
+                      className="w-full bg-white/60 border border-white/60 rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-sky-300"
                     />
                   </div>
                 ))}
                 {passwordError && (
-                  <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-red-600 text-sm">
+                  <div className="bg-red-50 border border-red-200 rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-red-600 text-xs sm:text-sm">
                     {passwordError}
                   </div>
                 )}
                 {passwordSuccess && (
-                  <div className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 text-green-600 text-sm font-medium">
+                  <div className="bg-green-50 border border-green-200 rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-green-600 text-xs sm:text-sm font-medium">
                     ✅ Пароль змінено
                   </div>
                 )}
                 <button
                   onClick={handleChangePassword}
                   disabled={passwordLoading}
-                  className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-6 py-3 rounded-2xl font-black transition hover:shadow-lg disabled:opacity-60 flex items-center justify-center gap-2 min-w-[160px]"
+                  className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl font-black text-sm sm:text-base transition hover:shadow-lg disabled:opacity-60 flex items-center justify-center gap-2 min-w-[140px] sm:min-w-[160px]"
                 >
                   {passwordLoading ? (
                     <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -436,11 +433,11 @@ export default function ProfilePage() {
           )}
 
           {/* DANGER ZONE */}
-          <div className="backdrop-blur-3xl bg-white/40 border border-red-200/50 rounded-[32px] p-8 shadow-xl">
-            <h2 className="text-2xl font-black text-red-500 mb-2">
+          <div className="backdrop-blur-3xl bg-white/40 border border-red-200/50 rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 shadow-xl">
+            <h2 className="text-xl sm:text-2xl font-black text-red-500 mb-1 sm:mb-2">
               Небезпечна зона
             </h2>
-            <p className="text-slate-500 text-sm mb-6">
+            <p className="text-slate-500 text-xs sm:text-sm mb-4 sm:mb-6">
               Видалення акаунту незворотнє. Всі твої маршрути залишаться в базі
               даних.
             </p>
@@ -450,30 +447,31 @@ export default function ProfilePage() {
                 setDeleteError("");
                 setDeletePassword("");
               }}
-              className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-500 px-6 py-3 rounded-2xl font-black transition"
+              className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-500 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl font-black text-sm sm:text-base transition"
             >
               🗑️ Видалити акаунт
             </button>
           </div>
         </div>
-
         <Footer />
       </div>
 
       {/* DELETE MODAL */}
       {deleteOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-[28px] p-8 w-full max-w-sm shadow-2xl">
-            <div className="text-4xl mb-4 text-center">⚠️</div>
-            <h3 className="text-xl font-black text-slate-800 mb-2 text-center">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center px-0 sm:px-4">
+          <div className="bg-white rounded-t-[28px] sm:rounded-[28px] p-6 sm:p-8 w-full sm:max-w-sm shadow-2xl">
+            <div className="text-3xl sm:text-4xl mb-3 sm:mb-4 text-center">
+              ⚠️
+            </div>
+            <h3 className="text-lg sm:text-xl font-black text-slate-800 mb-1.5 sm:mb-2 text-center">
               Видалити акаунт?
             </h3>
-            <p className="text-slate-500 text-sm text-center mb-6">
+            <p className="text-slate-500 text-xs sm:text-sm text-center mb-4 sm:mb-6">
               Цю дію не можна скасувати. Акаунт буде видалено назавжди.
             </p>
             {isEmailProvider && (
-              <div className="mb-4">
-                <label className="block text-sm font-bold text-slate-600 mb-2">
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-xs sm:text-sm font-bold text-slate-600 mb-1.5 sm:mb-2">
                   Підтвердіть пароль
                 </label>
                 <input
@@ -484,26 +482,26 @@ export default function ProfilePage() {
                     setDeleteError("");
                   }}
                   placeholder="••••••••"
-                  className="w-full border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-300"
+                  className="w-full border border-slate-200 rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 outline-none focus:ring-2 focus:ring-red-300 text-sm"
                 />
               </div>
             )}
             {deleteError && (
-              <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 mb-4 text-red-600 text-sm">
+              <div className="bg-red-50 border border-red-200 rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 text-red-600 text-xs sm:text-sm">
                 {deleteError}
               </div>
             )}
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <button
                 onClick={() => setDeleteOpen(false)}
-                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl py-3 font-bold transition"
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl sm:rounded-2xl py-2.5 sm:py-3 font-bold text-sm transition"
               >
                 Скасувати
               </button>
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleteLoading}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-2xl py-3 font-black transition disabled:opacity-60 flex items-center justify-center"
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-xl sm:rounded-2xl py-2.5 sm:py-3 font-black text-sm transition disabled:opacity-60 flex items-center justify-center"
               >
                 {deleteLoading ? (
                   <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
