@@ -13,9 +13,8 @@ import { ScrollToTop } from "./utils/ScrollToTop";
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
-        <ScrollToTop />
-
         <Route
           path="/generator"
           element={
