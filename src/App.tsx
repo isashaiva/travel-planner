@@ -8,11 +8,14 @@ import TripGeneratorPage from "./pages/TripGeneratorPage";
 import LocationPage from "./pages/LocationPage";
 import ProfilePage from "./pages/ProfilePage";
 import ExplorePage from "./pages/ExplorePage";
+import { ScrollToTop } from "./utils/ScrollToTop";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <ScrollToTop />
+
         <Route
           path="/generator"
           element={
