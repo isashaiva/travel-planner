@@ -295,14 +295,14 @@ export const toggleCommentReaction = async (
     });
     return null;
   } else {
-    // Знімаємо попередню реакцію якщо була
+
     if (prevReaction) {
       const prevField = prevReaction === "like" ? "likes" : "dislikes";
       await updateDoc(commentRef, {
         [prevField]: Math.max(0, (data[prevField] || 0) - 1),
       });
     }
-    // Ставимо нову
+    
     await setDoc(reactionRef, {
       userId: uid,
       commentId,

@@ -19,7 +19,7 @@ export default function Navbar() {
           </h1>
         </Link>
 
-        {/* NAV LINKS — тільки на великих екранах lg+ */}
+        {/* NAV LINKS */}
         <nav className="hidden lg:flex gap-6 xl:gap-8 text-gray-700 font-medium">
           <a
             href="#features"
@@ -35,7 +35,7 @@ export default function Navbar() {
           </a>
         </nav>
 
-        {/* AUTH BUTTONS — тільки на lg+ */}
+        {/* AUTH BUTTONS */}
         <div className="hidden lg:flex items-center gap-2 xl:gap-3">
           {!user ? (
             <>
@@ -95,7 +95,7 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* BURGER + AVATAR — на mobile і tablet (< lg) */}
+        {/* BURGER */}
         <div className="flex lg:hidden items-center gap-2">
           {user && (
             <Link
@@ -131,7 +131,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* DROPDOWN MENU — mobile і tablet */}
+      {/* DROPDOWN MENU */}
       <div
         className={`lg:hidden absolute top-full left-3 right-3 sm:left-6 sm:right-6 mt-2 z-50 transition-all duration-300 ${menuOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-2 pointer-events-none"}`}
       >
